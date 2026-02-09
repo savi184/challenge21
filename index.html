@@ -2,202 +2,277 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>21 Days Challenge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My 21-Day Mission</title>
     <style>
         :root {
-            --primary: #818cf8;
-            --success: #10b981;
             --bg: #0f172a;
-            --card: #1e293b;
+            --card-bg: #1e293b;
+            --acc-color: #f43f5e; /* Red for Accounting */
+            --bs-color: #3b82f6;  /* Blue for BS */
+            --ict-color: #10b981; /* Green for ICT */
+            --gold: #fbbf24;
             --text: #f8fafc;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: var(--bg);
             color: var(--text);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px;
             margin: 0;
+            padding: 20px;
             min-height: 100vh;
         }
 
-        h1 {
-            color: var(--primary);
-            font-size: 1.8rem;
-            margin: 15px 0;
+        .header {
             text-align: center;
-        }
-
-        .stats-container {
-            display: flex;
-            justify-content: space-around;
-            width: 90%;
-            max-width: 400px;
             margin-bottom: 20px;
-            background: var(--card);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.9);
+            width: 100%;
+            padding: 10px 0;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid #334155;
         }
 
-        .stat-box {
-            text-align: center;
-        }
-
-        .stat-value {
-            display: block;
-            font-size: 1.4rem;
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            font-size: 1.2rem;
             font-weight: bold;
-            color: var(--success);
         }
 
-        .stat-label {
-            font-size: 0.7rem;
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .stat-box span { color: var(--gold); }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Mobile එකේ දවසකට දෙක ගානේ පෙන්වන්න */
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
             width: 100%;
-            max-width: 600px;
-            padding-bottom: 30px;
-        }
-
-        /* PC එකේදී දවසකට 4ක් පෙන්වන්න */
-        @media (min-width: 600px) {
-            .grid { grid-template-columns: repeat(4, 1fr); }
+            max-width: 1200px;
         }
 
         .day-card {
-            background: var(--card);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #334155;
-            text-align: center;
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #334155;
+            transition: transform 0.2s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
+        .day-card.completed { border-color: var(--ict-color); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .day-card.perfect { border-color: var(--gold); box-shadow: 0 0 20px rgba(251, 191, 36, 0.4); }
+
         .day-title {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
             font-weight: bold;
-            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #94a3b8;
+        }
+
+        /* Subject Rows */
+        .subject-row {
+            display: flex;
+            align-items: center;
             margin-bottom: 8px;
-            display: block;
-            color: var(--primary);
+            background: rgba(255,255,255,0.03);
+            padding: 5px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .subject-row.row-done {
+            background: rgba(255,255,255,0.1);
+            animation: row-glow 1s ease-in-out;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            width: 50px;
+            font-weight: bold;
+            opacity: 0.7;
         }
 
         .slots {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            justify-items: center;
+            display: flex;
+            gap: 5px;
+            flex: 1;
+            justify-content: flex-end;
         }
 
         .slot {
-            width: 25px; /* Fixed width for mobile */
-            height: 25px; /* Fixed height for mobile */
-            background: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 6px;
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            background: #334155;
             cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.2s;
         }
 
-        .slot:active {
-            transform: scale(0.7);
-        }
+        /* Slot Colors when Active */
+        .acc .slot.active { background: var(--acc-color); box-shadow: 0 0 8px var(--acc-color); }
+        .bs .slot.active { background: var(--bs-color); box-shadow: 0 0 8px var(--bs-color); }
+        .ict .slot.active { background: var(--ict-color); box-shadow: 0 0 8px var(--ict-color); }
 
-        .slot.done {
-            background: var(--success);
-            border-color: var(--success);
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
-            animation: pop 0.3s ease-out;
-        }
+        .slot:hover { transform: scale(1.1); }
+        .slot:active { transform: scale(0.9); }
 
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.3); }
-            100% { transform: scale(1); }
-        }
-
-        .day-complete {
-            border-color: var(--success);
-            background: rgba(16, 185, 129, 0.1);
+        /* Animations */
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes row-glow { 0% { box-shadow: none; } 50% { box-shadow: inset 0 0 10px rgba(255,255,255,0.2); } 100% { box-shadow: none; } }
+        
+        /* Confetti Canvas */
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
         }
     </style>
 </head>
 <body>
 
-    <h1>21 Days Challenge</h1>
-
-    <div class="stats-container">
-        <div class="stat-box">
-            <span class="stat-value" id="hours-count">0</span>
-            <span class="stat-label">Hours Done</span>
-        </div>
-        <div class="stat-box" style="border-left: 1px solid #334155; padding-left: 20px;">
-            <span class="stat-value" id="days-count">0</span>
-            <span class="stat-label">Days Finished</span>
+    <div class="header">
+        <h1>🚀 21-Day Exam Mission</h1>
+        <div class="stats">
+            <div class="stat-box">DAYS DONE: <span id="total-days">0</span>/21</div>
+            <div class="stat-box">HOURS: <span id="total-hours">0</span></div>
         </div>
     </div>
 
-    <div class="grid" id="challenge-grid"></div>
+    <div class="grid" id="grid"></div>
+    <canvas id="confetti"></canvas>
 
     <script>
-        const SLOTS_PER_DAY = 6;
-        let progress = JSON.parse(localStorage.getItem('challenge_21_mobile_data')) || {};
+        const subjects = [
+            { id: 'acc', label: 'ACC', color: 'acc' },
+            { id: 'bs', label: 'BS', color: 'bs' },
+            { id: 'ict', label: 'ICT', color: 'ict' }
+        ];
+
+        // Load data or initialize
+        let progress = JSON.parse(localStorage.getItem('study_mission_v1')) || {};
 
         function render() {
-            const grid = document.getElementById('challenge-grid');
+            const grid = document.getElementById('grid');
             grid.innerHTML = '';
             let totalHours = 0;
-            let fullDays = 0;
+            let daysCompleted = 0;
 
             for (let d = 1; d <= 21; d++) {
-                const daySlots = progress[d] || [];
-                totalHours += daySlots.length;
-                const isDayDone = daySlots.length === SLOTS_PER_DAY;
-                if (isDayDone) fullDays++;
+                if (!progress[d]) progress[d] = []; // Array of 0-11 (indices)
+                
+                const dayData = progress[d];
+                const count = dayData.length;
+                totalHours += count;
+
+                // Determine Card Status
+                let statusClass = '';
+                if (count >= 12) statusClass = 'perfect'; // All 12 done
+                else if (count >= 8) { statusClass = 'completed'; daysCompleted++; } // 8+ done
 
                 const card = document.createElement('div');
-                card.className = `day-card ${isDayDone ? 'day-complete' : ''}`;
+                card.className = `day-card ${statusClass}`;
                 
-                let slotsHtml = '';
-                for (let s = 1; s <= SLOTS_PER_DAY; s++) {
-                    const isDone = daySlots.includes(s);
-                    slotsHtml += `<div class="slot ${isDone ? 'done' : ''}" onclick="toggleSlot(${d}, ${s})"></div>`;
-                }
+                let innerHTML = `<div class="day-title"><span>Day ${d}</span> <span>${count}/12</span></div>`;
 
-                card.innerHTML = `<span class="day-title">Day ${d}</span><div class="slots">${slotsHtml}</div>`;
+                // Render 3 Rows
+                subjects.forEach((subj, subjIdx) => {
+                    const startIndex = subjIdx * 4; // 0, 4, 8
+                    let rowFilled = 0;
+                    let slotsHTML = '';
+
+                    for (let i = 0; i < 4; i++) {
+                        const globalIdx = startIndex + i;
+                        const isActive = dayData.includes(globalIdx);
+                        if (isActive) rowFilled++;
+                        
+                        slotsHTML += `<div class="slot ${isActive ? 'active' : ''}" 
+                            onclick="toggle(${d}, ${globalIdx})"></div>`;
+                    }
+
+                    const isRowDone = rowFilled === 4 ? 'row-done' : '';
+                    innerHTML += `
+                        <div class="subject-row ${subj.color} ${isRowDone}">
+                            <div class="label">${subj.label}</div>
+                            <div class="slots">${slotsHTML}</div>
+                        </div>`;
+                });
+
+                card.innerHTML = innerHTML;
                 grid.appendChild(card);
             }
 
-            document.getElementById('hours-count').innerText = totalHours;
-            document.getElementById('days-count').innerText = fullDays;
+            document.getElementById('total-days').innerText = daysCompleted;
+            document.getElementById('total-hours').innerText = totalHours;
         }
 
-        function toggleSlot(day, hour) {
-            if (!progress[day]) progress[day] = [];
-            const index = progress[day].indexOf(hour);
+        function toggle(day, index) {
+            let dayData = progress[day] || [];
             
-            if (index > -1) {
-                progress[day].splice(index, 1);
+            if (dayData.includes(index)) {
+                dayData = dayData.filter(i => i !== index);
             } else {
-                progress[day].push(hour);
+                dayData.push(index);
+                // Check for animations
+                if (dayData.length === 12) launchConfetti();
+            }
+            
+            progress[day] = dayData;
+            localStorage.setItem('study_mission_v1', JSON.stringify(progress));
+            render();
+        }
+
+        // --- Simple Confetti Logic ---
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for(let i=0; i<100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    c: ['#f43f5e', '#3b82f6', '#10b981', '#fbbf24'][Math.floor(Math.random()*4)],
+                    s: Math.random() * 5 + 2,
+                    d: Math.random() * 5 + 2
+                });
             }
 
-            localStorage.setItem('challenge_21_mobile_data', JSON.stringify(progress));
-            render();
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                let active = false;
+                particles.forEach(p => {
+                    p.y += p.d;
+                    if(p.y < canvas.height) {
+                        active = true;
+                        ctx.fillStyle = p.c;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.s, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                });
+                if(active) requestAnimationFrame(draw);
+            }
+            draw();
         }
 
         render();
     </script>
 </body>
-
 </html>
