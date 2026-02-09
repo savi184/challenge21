@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>21 Days Challenge</title>
+    <style>
+        :root {
+            --primary: #818cf8;
+            --success: #10b981;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            width: 90%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            background: var(--card);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--success);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Mobile එකේ දවසකට දෙක ගානේ පෙන්වන්න */
+            gap: 12px;
+            width: 100%;
+            max-width: 600px;
+            padding-bottom: 30px;
+        }
+
+        /* PC එකේදී දවසකට 4ක් පෙන්වන්න */
+        @media (min-width: 600px) {
+            .grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        .day-card {
+            background: var(--card);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+
+        .day-title {
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--primary);
+        }
+
+        .slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            justify-items: center;
+        }
+
+        .slot {
+            width: 25px; /* Fixed width for mobile */
+            height: 25px; /* Fixed height for mobile */
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .slot:active {
+            transform: scale(0.7);
+        }
+
+        .slot.done {
+            background: var(--success);
+            border-color: var(--success);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .day-complete {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>21 Days Challenge</h1>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <span class="stat-value" id="hours-count">0</span>
+            <span class="stat-label">Hours Done</span>
+        </div>
+        <div class="stat-box" style="border-left: 1px solid #334155; padding-left: 20px;">
+            <span class="stat-value" id="days-count">0</span>
+            <span class="stat-label">Days Finished</span>
+        </div>
+    </div>
+
+    <div class="grid" id="challenge-grid"></div>
+
+    <script>
+        const SLOTS_PER_DAY = 6;
+        let progress = JSON.parse(localStorage.getItem('challenge_21_mobile_data')) || {};
+
+        function render() {
+            const grid = document.getElementById('challenge-grid');
+            grid.innerHTML = '';
+            let totalHours = 0;
+            let fullDays = 0;
+
+            for (let d = 1; d <= 21; d++) {
+                const daySlots = progress[d] || [];
+                totalHours += daySlots.length;
+                const isDayDone = daySlots.length === SLOTS_PER_DAY;
+                if (isDayDone) fullDays++;
+
+                const card = document.createElement('div');
+                card.className = `day-card ${isDayDone ? 'day-complete' : ''}`;
+                
+                let slotsHtml = '';
+                for (let s = 1; s <= SLOTS_PER_DAY; s++) {
+                    const isDone = daySlots.includes(s);
+                    slotsHtml += `<div class="slot ${isDone ? 'done' : ''}" onclick="toggleSlot(${d}, ${s})"></div>`;
+                }
+
+                card.innerHTML = `<span class="day-title">Day ${d}</span><div class="slots">${slotsHtml}</div>`;
+                grid.appendChild(card);
+            }
+
+            document.getElementById('hours-count').innerText = totalHours;
+            document.getElementById('days-count').innerText = fullDays;
+        }
+
+        function toggleSlot(day, hour) {
+            if (!progress[day]) progress[day] = [];
+            const index = progress[day].indexOf(hour);
+            
+            if (index > -1) {
+                progress[day].splice(index, 1);
+            } else {
+                progress[day].push(hour);
+            }
+
+            localStorage.setItem('challenge_21_mobile_data', JSON.stringify(progress));
+            render();
+        }
+
+        render();
+    </script>
+</body>
+</html>
