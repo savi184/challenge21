@@ -1,1 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My 21-Day Mission</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --acc-color: #f43f5e; /* Red for Accounting */
+            --bs-color: #3b82f6;  /* Blue for BS */
+            --ict-color: #10b981; /* Green for ICT */
+            --gold: #fbbf24;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.9);
+            width: 100%;
+            padding: 10px 0;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid #334155;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .stat-box span { color: var(--gold); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .day-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #334155;
+            transition: transform 0.2s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .day-card.completed { border-color: var(--ict-color); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .day-card.perfect { border-color: var(--gold); box-shadow: 0 0 20px rgba(251, 191, 36, 0.4); }
+
+        .day-title {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #94a3b8;
+        }
+
+        /* Subject Rows */
+        .subject-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.03);
+            padding: 5px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .subject-row.row-done {
+            background: rgba(255,255,255,0.1);
+            animation: row-glow 1s ease-in-out;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            width: 50px;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+
+        .slots {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .slot {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            background: #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        /* Slot Colors when Active */
+        .acc .slot.active { background: var(--acc-color); box-shadow: 0 0 8px var(--acc-color); }
+        .bs .slot.active { background: var(--bs-color); box-shadow: 0 0 8px var(--bs-color); }
+        .ict .slot.active { background: var(--ict-color); box-shadow: 0 0 8px var(--ict-color); }
+
+        .slot:hover { transform: scale(1.1); }
+        .slot:active { transform: scale(0.9); }
+
+        /* Animations */
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes row-glow { 0% { box-shadow: none; } 50% { box-shadow: inset 0 0 10px rgba(255,255,255,0.2); } 100% { box-shadow: none; } }
+        
+        /* Confetti Canvas */
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🚀 21-Day Exam Mission</h1>
+        <div class="stats">
+            <div class="stat-box">DAYS DONE: <span id="total-days">0</span>/21</div>
+            <div class="stat-box">HOURS: <span id="total-hours">0</span></div>
+        </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <canvas id="confetti"></canvas>
+
+    <script>
+        const subjects = [
+            { id: 'acc', label: 'ACC', color: 'acc' },
+            { id: 'bs', label: 'BS', color: 'bs' },
+            { id: 'ict', label: 'ICT', color: 'ict' }
+        ];
+
+        // Load data or initialize
+        let progress = JSON.parse(localStorage.getItem('study_mission_v1')) || {};
+
+        function render() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            let totalHours = 0;
+            let daysCompleted = 0;
+
+            for (let d = 1; d <= 21; d++) {
+                if (!progress[d]) progress[d] = []; // Array of 0-11 (indices)
+                
+                const dayData = progress[d];
+                const count = dayData.length;
+                totalHours += count;
+
+                // Determine Card Status
+                let statusClass = '';
+                if (count >= 12) statusClass = 'perfect'; // All 12 done
+                else if (count >= 8) { statusClass = 'completed'; daysCompleted++; } // 8+ done
+
+                const card = document.createElement('div');
+                card.className = `day-card ${statusClass}`;
+                
+                let innerHTML = `<div class="day-title"><span>Day ${d}</span> <span>${count}/12</span></div>`;
+
+                // Render 3 Rows
+                subjects.forEach((subj, subjIdx) => {
+                    const startIndex = subjIdx * 4; // 0, 4, 8
+                    let rowFilled = 0;
+                    let slotsHTML = '';
+
+                    for (let i = 0; i < 4; i++) {
+                        const globalIdx = startIndex + i;
+                        const isActive = dayData.includes(globalIdx);
+                        if (isActive) rowFilled++;
+                        
+                        slotsHTML += `<div class="slot ${isActive ? 'active' : ''}" 
+                            onclick="toggle(${d}, ${globalIdx})"></div>`;
+                    }
+
+                    const isRowDone = rowFilled === 4 ? 'row-done' : '';
+                    innerHTML += `
+                        <div class="subject-row ${subj.color} ${isRowDone}">
+                            <div class="label">${subj.label}</div>
+                            <div class="slots">${slotsHTML}</div>
+                        </div>`;
+                });
+
+                card.innerHTML = innerHTML;
+                grid.appendChild(card);
+            }
+
+            document.getElementById('total-days').innerText = daysCompleted;
+            document.getElementById('total-hours').innerText = totalHours;
+        }
+
+        function toggle(day, index) {
+            let dayData = progress[day] || [];
+            
+            if (dayData.includes(index)) {
+                dayData = dayData.filter(i => i !== index);
+            } else {
+                dayData.push(index);
+                // Check for animations
+                if (dayData.length === 12) launchConfetti();
+            }
+            
+            progress[day] = dayData;
+            localStorage.setItem('study_mission_v1', JSON.stringify(progress));
+            render();
+        }
+
+        // --- Simple Confetti Logic ---
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for(let i=0; i<100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    c: ['#f43f5e', '#3b82f6', '#10b981', '#fbbf24'][Math.floor(Math.random()*4)],
+                    s: Math.random() * 5 + 2,
+                    d: Math.random() * 5 + 2
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                let active = false;
+                particles.forEach(p => {
+                    p.y += p.d;
+                    if(p.y < canvas.height) {
+                        active = true;
+                        ctx.fillStyle = p.c;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.s, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                });
+                if(active) requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        render();
+    </script>
+</body>
+</html>
 
